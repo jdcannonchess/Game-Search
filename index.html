@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess.com Explorer - Search Feature Prototype</title>
+    <style>
+        /* ========== CSS Reset & Base ========== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-dark: #312e2b;
+            --bg-sidebar: #262522;
+            --bg-input: #1e1c1a;
+            --bg-hover: #3d3a37;
+            --bg-card: #2b2926;
+            --text-primary: #fff;
+            --text-secondary: #9e9e9e;
+            --text-muted: #6b6b6b;
+            --accent-green: #81b64c;
+            --accent-green-hover: #9bc865;
+            --accent-gold: #f0c36d;
+            --border-color: #3d3a37;
+            --win-color: #81b64c;
+            --loss-color: #e74c3c;
+            --draw-color: #9e9e9e;
+            --board-light: #ebecd0;
+            --board-dark: #739552;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ========== Layout ========== */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .nav-sidebar {
+            width: 180px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 16px 12px;
+            flex-shrink: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            overflow-x: auto;
+        }
+
+        .board-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .explorer-sidebar {
+            width: 340px;
+            min-width: 340px;
+            background: var(--bg-sidebar);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 40px);
+            flex-shrink: 0;
+        }
+
+        /* ========== Navigation Sidebar ========== */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-green);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.8;
+        }
+
+        .nav-badge {
+            background: #e74c3c;
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+
+        /* ========== Chessboard ========== */
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .player-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-hover);
+            border-radius: 4px;
+        }
+
+        .player-name {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .chessboard {
+            width: 400px;
+            height: 400px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        .square {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            user-select: none;
+        }
+
+        .square.light { background: var(--board-light); }
+        .square.dark { background: var(--board-dark); }
+
+        .file-label, .rank-label {
+            position: absolute;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* ========== Explorer Sidebar Header ========== */
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .sidebar-title svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-green);
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            font-weight: 600;
+        }
+
+        .tab-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Database Selector */
+        .database-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .database-selector {
+            position: relative;
+            flex: 1;
+        }
+
+        .database-dropdown {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            appearance: none;
+            padding-right: 36px;
+        }
+
+        .database-dropdown:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        .dropdown-arrow {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-secondary);
+        }
+
+        /* Mode Toggle Icon Button */
+        .mode-icon-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .mode-icon-btn:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .mode-icon-btn.active {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: var(--bg-dark);
+        }
+
+        .mode-icon-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* ========== Sidebar Content ========== */
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Explorer View */
+        .explorer-view, .search-view, .results-view {
+            display: none;
+        }
+
+        .explorer-view.active {
+            display: block;
+        }
+
+        .results-view.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .results-view .results-header,
+        .results-view .sort-controls {
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+        }
+
+        .results-view .game-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .search-view.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .search-view .search-form {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 8px;
+        }
+
+        .search-view .search-actions {
+            flex-shrink: 0;
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-secondary);
+            padding-top: 12px;
+            margin-top: auto;
+        }
+
+        /* Position Info */
+        .position-info {
+            background: var(--bg-input);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .position-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .position-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Move Stats */
+        .move-stats {
+            margin-bottom: 16px;
+        }
+
+        .move-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+
+        .move-notation {
+            width: 50px;
+            font-weight: 600;
+        }
+
+        .move-games {
+            width: 80px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .move-eval {
+            width: 50px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .move-bar {
+            flex: 1;
+            display: flex;
+            height: 20px;
+            border-radius: 3px;
+            overflow: hidden;
+            font-size: 11px;
+        }
+
+        .move-bar span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-dark);
+            font-weight: 600;
+        }
+
+        .bar-white { background: #f0f0f0; }
+        .bar-draw { background: var(--draw-color); }
+        .bar-black { background: #333; color: white !important; }
+
+        /* ========== Search Form ========== */
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .form-group.hidden {
+            display: none !important;
+        }
+
+        .form-label {
+            display: none; /* Hide labels - use placeholders instead */
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-input, .form-select {
+            padding: 8px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+            transition: border-color 0.15s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-input.prefilled {
+            background: var(--bg-hover);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .form-row .form-input {
+            width: 100%;
+        }
+
+        /* Inline form group for side-by-side fields */
+        .form-inline {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .form-inline .form-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .form-inline .form-input,
+        .form-inline .form-select {
+            width: 100%;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-green);
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        /* Result Options Grid */
+        .result-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .result-option {
+            padding: 6px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .result-option:hover {
+            border-color: var(--accent-green);
+        }
+
+        .result-option.selected {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: var(--bg-dark);
+            font-weight: 600;
+        }
+
+        .result-option.win { border-left: 3px solid var(--win-color); }
+        .result-option.loss { border-left: 3px solid var(--loss-color); }
+        .result-option.draw { border-left: 3px solid var(--draw-color); }
+
+        /* Expandable Section */
+        .expandable-section {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-top: 4px;
+        }
+
+        .expandable-header {
+            padding: 10px 12px;
+            background: var(--bg-input);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
+        .expandable-header:hover {
+            background: var(--bg-hover);
+        }
+
+        .expandable-content {
+            padding: 12px;
+            display: none;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .expandable-content.open {
+            display: block;
+        }
+
+        .sub-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .sub-option {
+            padding: 6px 10px;
+            background: var(--bg-hover);
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .sub-option:hover {
+            border-color: var(--accent-green);
+        }
+
+        .sub-option.selected {
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            font-weight: 600;
+        }
+
+        /* Search Actions */
+        .search-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-search {
+            flex: 1;
+            padding: 10px 16px;
+            background: var(--accent-green);
+            border: none;
+            border-radius: 4px;
+            color: var(--bg-dark);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-search:hover {
+            background: var(--accent-green-hover);
+        }
+
+        .btn-reset {
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-reset:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        /* ========== Results View ========== */
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .results-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-icon-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .back-icon-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .back-icon-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .results-count {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .results-count strong {
+            color: var(--text-secondary);
+        }
+
+
+        /* Game List */
+        .game-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .result-group {
+            margin-bottom: 16px;
+        }
+
+        .result-group-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 8px;
+        }
+
+        .result-group-header.wins { color: var(--win-color); }
+        .result-group-header.losses { color: var(--loss-color); }
+        .result-group-header.draws { color: var(--draw-color); }
+
+        .game-card {
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .game-card:hover {
+            background: var(--bg-hover);
+        }
+
+        .game-card.selected {
+            background: var(--bg-input);
+        }
+
+        .game-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .game-players {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .game-player {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            gap: 4px;
+        }
+
+        .game-player .rating {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .game-player .title {
+            color: var(--accent-gold);
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .game-vs {
+            color: var(--text-muted);
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .game-result {
+            font-weight: 600;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .game-result.win {
+            background: rgba(129, 182, 76, 0.2);
+            color: var(--win-color);
+        }
+
+        .game-result.loss {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--loss-color);
+        }
+
+        .game-result.draw {
+            background: rgba(158, 158, 158, 0.2);
+            color: var(--draw-color);
+        }
+
+        .game-year {
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .game-rating {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ========== Scrollbar ========== */
+        .sidebar-content::-webkit-scrollbar,
+        .game-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-track,
+        .game-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb,
+        .game-list::-webkit-scrollbar-thumb {
+            background: rgba(60, 60, 60, 0.6);
+            border-radius: 2px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb:hover,
+        .game-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(80, 80, 80, 0.8);
+        }
+
+        /* ========== Utility ========== */
+        .divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 12px 0;
+        }
+
+        .section-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        /* Required indicator */
+        .required::after {
+            content: '*';
+            color: var(--loss-color);
+            margin-left: 2px;
+        }
+
+        /* Hidden utility class */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Prototype Badge */
+        .prototype-badge {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            background: var(--accent-gold);
+            color: var(--bg-dark);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="prototype-badge">Prototype</div>
+
+    <div class="app-container">
+        <!-- Navigation Sidebar -->
+        <nav class="nav-sidebar">
+            <a href="#" class="logo">
+                <span class="logo-icon">♞</span>
+                Chess.com
+            </a>
+
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                Play
+                <span class="nav-badge">1</span>
+            </div>
+
+            <div class="nav-item active">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Analysis
+            </div>
+
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z"/>
+                </svg>
+                Events
+            </div>
+
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+                Clubs
+            </div>
+
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+                Other
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Board Section -->
+            <div class="board-section">
+                <div class="player-info">
+                    <div class="player-avatar"></div>
+                    <span class="player-name">Black</span>
+                </div>
+
+                <div class="chessboard" id="chessboard"></div>
+
+                <div class="player-info">
+                    <div class="player-avatar"></div>
+                    <span class="player-name">White</span>
+                </div>
+            </div>
+
+            <!-- Explorer Sidebar -->
+            <aside class="explorer-sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Analysis
+                    </div>
+
+                    <!-- Tab Navigation -->
+                    <div class="tab-nav">
+                        <button class="tab-btn" data-tab="analysis">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+                            </svg>
+                            Analysis
+                        </button>
+                        <button class="tab-btn" data-tab="games">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/>
+                            </svg>
+                            Games
+                        </button>
+                        <button class="tab-btn active" data-tab="explore">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z"/>
+                            </svg>
+                            Explore
+                        </button>
+                    </div>
+
+                    <!-- Database Selector with Mode Toggle -->
+                    <div class="database-row">
+                        <div class="database-selector">
+                            <select class="database-dropdown" id="databaseSelect">
+                                <option value="my-games">My Games</option>
+                                <option value="other-players">Other Players</option>
+                                <option value="master-games" selected>Master Games</option>
+                                <option value="all-games">All Chess.com Games</option>
+                            </select>
+                            <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7 10l5 5 5-5z"/>
+                            </svg>
+                        </div>
+                        <button class="mode-icon-btn" id="modeToggleBtn" title="Search Games">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                            <svg class="explorer-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                                <path d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sidebar-content">
+                    <!-- Explorer View (Default) -->
+                    <div class="explorer-view active" id="explorerView">
+                        <div class="position-info">
+                            <div class="position-label">A00 Starting Position</div>
+                        </div>
+
+                        <div class="move-stats">
+                            <div class="move-row">
+                                <span class="move-notation">1. e4</span>
+                                <span class="move-games">1,968,384</span>
+                                <span class="move-eval">+0.32</span>
+                                <div class="move-bar">
+                                    <span class="bar-white" style="width: 39%">39%</span>
+                                    <span class="bar-draw" style="width: 29%">29%</span>
+                                    <span class="bar-black" style="width: 32%">33%</span>
+                                </div>
+                            </div>
+                            <div class="move-row">
+                                <span class="move-notation">1. d4</span>
+                                <span class="move-games">1,469,740</span>
+                                <span class="move-eval">+0.22</span>
+                                <div class="move-bar">
+                                    <span class="bar-white" style="width: 39%">39%</span>
+                                    <span class="bar-draw" style="width: 31%">31%</span>
+                                    <span class="bar-black" style="width: 30%">30%</span>
+                                </div>
+                            </div>
+                            <div class="move-row">
+                                <span class="move-notation">1. Nf3</span>
+                                <span class="move-games">428,946</span>
+                                <span class="move-eval">+0.34</span>
+                                <div class="move-bar">
+                                    <span class="bar-white" style="width: 40%">40%</span>
+                                    <span class="bar-draw" style="width: 32%">32%</span>
+                                    <span class="bar-black" style="width: 28%">28%</span>
+                                </div>
+                            </div>
+                            <div class="move-row">
+                                <span class="move-notation">1. c4</span>
+                                <span class="move-games">288,431</span>
+                                <span class="move-eval">+0.27</span>
+                                <div class="move-bar">
+                                    <span class="bar-white" style="width: 40%">40%</span>
+                                    <span class="bar-draw" style="width: 32%">32%</span>
+                                    <span class="bar-black" style="width: 28%">28%</span>
+                                </div>
+                            </div>
+                            <div class="move-row">
+                                <span class="move-notation">1. g3</span>
+                                <span class="move-games">32,154</span>
+                                <span class="move-eval">+0.18</span>
+                                <div class="move-bar">
+                                    <span class="bar-white" style="width: 41%">41%</span>
+                                    <span class="bar-draw" style="width: 31%">31%</span>
+                                    <span class="bar-black" style="width: 28%">29%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-title">Recommended Courses</div>
+                        <div style="color: var(--text-muted); font-size: 13px; padding: 12px 0;">
+                            Course recommendations based on current position...
+                        </div>
+                    </div>
+
+                    <!-- Search View (NEW) -->
+                    <div class="search-view" id="searchView">
+                        <form class="search-form" id="searchForm">
+                            <!-- My Games / Other Players Fields -->
+                            <div class="form-group" id="playerField">
+                                <input type="text" class="form-input prefilled" id="playerInput" value="jdcannon" readonly placeholder="Player">
+                            </div>
+
+                            <!-- Master Games / All Games Fields -->
+                            <div class="form-inline">
+                                <div class="form-group hidden" id="whitePlayerField">
+                                    <input type="text" class="form-input" id="whitePlayerInput" placeholder="White Player *">
+                                </div>
+                                <div class="form-group hidden" id="blackPlayerField">
+                                    <input type="text" class="form-input" id="blackPlayerInput" placeholder="Black Player">
+                                </div>
+                            </div>
+
+                            <div class="checkbox-group hidden" id="ignoreColorsField">
+                                <input type="checkbox" id="ignoreColors">
+                                <label class="checkbox-label" for="ignoreColors">Ignore Colors</label>
+                            </div>
+
+                            <div class="form-inline">
+                                <div class="form-group" id="colorField">
+                                    <select class="form-select" id="colorSelect">
+                                        <option value="">Color</option>
+                                        <option value="white">White</option>
+                                        <option value="black">Black</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="gameTypeField">
+                                    <select class="form-select" id="gameTypeSelect">
+                                        <option value="">Game Type</option>
+                                        <option value="bullet">Bullet</option>
+                                        <option value="blitz">Blitz</option>
+                                        <option value="rapid">Rapid</option>
+                                        <option value="daily">Daily</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" id="opponentField">
+                                <input type="text" class="form-input" id="opponentInput" placeholder="Opponent">
+                            </div>
+
+                            <!-- Result Buttons (Master Games only - simple Win/Loss/Draw) -->
+                            <div class="form-group hidden" id="resultButtonsField">
+                                <div class="result-options" id="resultOptions">
+                                    <div class="result-option win" data-value="won">Win</div>
+                                    <div class="result-option loss" data-value="lost">Loss</div>
+                                    <div class="result-option draw" data-value="draw">Draw</div>
+                                </div>
+                            </div>
+
+                            <!-- Result Dropdown (My Games, Other Players, All Games - detailed options) -->
+                            <div class="form-group hidden" id="resultDropdownField">
+                                <select class="form-select" id="resultSelect">
+                                    <option value="">Result</option>
+                                    <optgroup label="Won">
+                                        <option value="won">Won (Any)</option>
+                                        <option value="won-checkmate">Won by Checkmate</option>
+                                        <option value="won-resignation">Won by Resignation</option>
+                                        <option value="won-timeout">Won by Timeout</option>
+                                        <option value="won-abandonment">Won by Abandonment</option>
+                                    </optgroup>
+                                    <optgroup label="Lost">
+                                        <option value="lost">Lost (Any)</option>
+                                        <option value="lost-checkmate">Lost by Checkmate</option>
+                                        <option value="lost-resignation">Lost by Resignation</option>
+                                        <option value="lost-timeout">Lost by Timeout</option>
+                                        <option value="lost-abandonment">Lost by Abandonment</option>
+                                    </optgroup>
+                                    <optgroup label="Draw">
+                                        <option value="draw">Draw (Any)</option>
+                                        <option value="draw-agreement">Draw by Agreement</option>
+                                        <option value="draw-repetition">Draw by Repetition</option>
+                                        <option value="draw-stalemate">Draw by Stalemate</option>
+                                        <option value="draw-insufficient">Draw by Insufficient Material</option>
+                                        <option value="draw-timeout-insufficient">Draw by Timeout vs Insufficient</option>
+                                        <option value="draw-50move">Draw by 50-move Rule</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <div class="form-inline">
+                                <div class="form-group" id="titleField">
+                                    <select class="form-select" id="titleSelect">
+                                        <option value="">Title</option>
+                                        <option value="GM">GM</option>
+                                        <option value="IM">IM</option>
+                                        <option value="FM">FM</option>
+                                        <option value="WGM">WGM</option>
+                                        <option value="WIM">WIM</option>
+                                        <option value="WFM">WFM</option>
+                                        <option value="CM">CM</option>
+                                        <option value="WCM">WCM</option>
+                                        <option value="NM">NM</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="matchTypeField">
+                                    <select class="form-select" id="matchTypeSelect">
+                                        <option value="">Match Type</option>
+                                        <option value="tournament">Tournament</option>
+                                        <option value="team-match">Team Match</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group hidden" id="openingField">
+                                <select class="form-select" id="openingSelect">
+                                    <option value="">Opening</option>
+                                    <optgroup label="A - Flank Openings">
+                                        <option value="A00-A09">A00-A09: Uncommon</option>
+                                        <option value="A10-A39">A10-A39: English</option>
+                                        <option value="A40-A44">A40-A44: Queen's Pawn</option>
+                                        <option value="A45-A49">A45-A49: Indian Game</option>
+                                        <option value="A50-A79">A50-A79: Indian Defenses</option>
+                                        <option value="A80-A99">A80-A99: Dutch</option>
+                                    </optgroup>
+                                    <optgroup label="B - Semi-Open">
+                                        <option value="B00-B09">B00-B09: Uncommon e4</option>
+                                        <option value="B10-B19">B10-B19: Caro-Kann</option>
+                                        <option value="B20-B99">B20-B99: Sicilian</option>
+                                    </optgroup>
+                                    <optgroup label="C - Open Games">
+                                        <option value="C00-C19">C00-C19: French</option>
+                                        <option value="C20-C29">C20-C29: King's Pawn</option>
+                                        <option value="C30-C39">C30-C39: King's Gambit</option>
+                                        <option value="C40-C49">C40-C49: Open Game</option>
+                                        <option value="C50-C59">C50-C59: Italian</option>
+                                        <option value="C60-C99">C60-C99: Ruy Lopez</option>
+                                    </optgroup>
+                                    <optgroup label="D - Closed">
+                                        <option value="D00-D05">D00-D05: Queen's Pawn</option>
+                                        <option value="D06-D69">D06-D69: Queen's Gambit</option>
+                                        <option value="D70-D99">D70-D99: Grünfeld</option>
+                                    </optgroup>
+                                    <optgroup label="E - Indian">
+                                        <option value="E00-E09">E00-E09: Catalan</option>
+                                        <option value="E10-E19">E10-E19: Queen's Indian</option>
+                                        <option value="E20-E59">E20-E59: Nimzo-Indian</option>
+                                        <option value="E60-E99">E60-E99: King's Indian</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="ratedField">
+                                <select class="form-select" id="ratedSelect">
+                                    <option value="">Rated</option>
+                                    <option value="rated">Rated Only</option>
+                                    <option value="unrated">Unrated Only</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="dateRangeField">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <input type="date" class="form-input" id="dateFrom" title="From Date">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="date" class="form-input" id="dateTo" title="To Date">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group" id="ratingRangeField">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <input type="number" class="form-input" id="ratingMin" placeholder="Min Rating">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-input" id="ratingMax" placeholder="Max Rating">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="search-actions">
+                                <button type="button" class="btn-reset" id="resetBtn">Reset</button>
+                                <button type="submit" class="btn-search" id="searchBtn">Search</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Results View (NEW) -->
+                    <div class="results-view" id="resultsView">
+                        <div class="results-header">
+                            <span class="results-count"><strong id="resultsCountNum">12</strong> games</span>
+                            <button class="back-icon-btn" id="backToSearchBtn" title="Back to Search">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="game-list" id="gameList">
+                            <!-- Games will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <div class="toast" id="toast">Game loaded!</div>
+
+    <script>
+        // ========== Configuration ==========
+        const CURRENT_USER = 'jdcannon';
+
+        // ========== Mock Data ==========
+        const mockGames = [
+            { id: 1, white: 'Magnus Carlsen', whiteRating: 2847, whiteTitle: 'GM', black: 'Hikaru Nakamura', blackRating: 2768, blackTitle: 'GM', result: 'win', resultText: '1-0', date: '2024-12-08', opening: 'B90 Sicilian, Najdorf', gameType: 'Classical', moves: 42 },
+            { id: 2, white: 'Fabiano Caruana', whiteRating: 2805, whiteTitle: 'GM', black: 'Magnus Carlsen', blackRating: 2847, blackTitle: 'GM', result: 'draw', resultText: '½-½', date: '2024-12-05', opening: 'C65 Ruy Lopez, Berlin', gameType: 'Rapid', moves: 67 },
+            { id: 3, white: 'Ian Nepomniachtchi', whiteRating: 2789, whiteTitle: 'GM', black: 'Ding Liren', blackRating: 2780, blackTitle: 'GM', result: 'loss', resultText: '0-1', date: '2024-12-01', opening: 'D37 Queen\'s Gambit', gameType: 'Classical', moves: 51 },
+            { id: 4, white: 'Alireza Firouzja', whiteRating: 2777, whiteTitle: 'GM', black: 'Wesley So', blackRating: 2757, blackTitle: 'GM', result: 'win', resultText: '1-0', date: '2024-11-28', opening: 'E60 King\'s Indian', gameType: 'Blitz', moves: 38 },
+            { id: 5, white: 'Anish Giri', whiteRating: 2764, whiteTitle: 'GM', black: 'Levon Aronian', blackRating: 2756, blackTitle: 'GM', result: 'draw', resultText: '½-½', date: '2024-11-25', opening: 'A13 English Opening', gameType: 'Rapid', moves: 45 },
+            { id: 6, white: 'Sergey Karjakin', whiteRating: 2743, whiteTitle: 'GM', black: 'Alexander Grischuk', blackRating: 2738, blackTitle: 'GM', result: 'win', resultText: '1-0', date: '2024-11-20', opening: 'C50 Italian Game', gameType: 'Classical', moves: 56 },
+            { id: 7, white: 'Maxime Vachier-Lagrave', whiteRating: 2731, whiteTitle: 'GM', black: 'Richard Rapport', blackRating: 2720, blackTitle: 'GM', result: 'loss', resultText: '0-1', date: '2024-11-15', opening: 'B12 Caro-Kann Defense', gameType: 'Blitz', moves: 33 },
+            { id: 8, white: 'Shakhriyar Mamedyarov', whiteRating: 2712, whiteTitle: 'GM', black: 'Viswanathan Anand', blackRating: 2700, blackTitle: 'GM', result: 'draw', resultText: '½-½', date: '2024-11-10', opening: 'D85 Grünfeld Defense', gameType: 'Rapid', moves: 58 },
+            { id: 9, white: 'Teimour Radjabov', whiteRating: 2698, whiteTitle: 'GM', black: 'Peter Svidler', blackRating: 2690, blackTitle: 'GM', result: 'win', resultText: '1-0', date: '2024-11-05', opening: 'E04 Catalan Opening', gameType: 'Classical', moves: 47 },
+            { id: 10, white: 'Pentala Harikrishna', whiteRating: 2685, whiteTitle: 'GM', black: 'Jan-Krzysztof Duda', blackRating: 2680, blackTitle: 'GM', result: 'loss', resultText: '0-1', date: '2024-11-01', opening: 'C42 Petrov Defense', gameType: 'Blitz', moves: 29 },
+            { id: 11, white: 'Leinier Dominguez', whiteRating: 2675, whiteTitle: 'GM', black: 'Santosh Vidit', blackRating: 2670, blackTitle: 'GM', result: 'win', resultText: '1-0', date: '2024-10-28', opening: 'A45 Trompowsky Attack', gameType: 'Rapid', moves: 41 },
+            { id: 12, white: 'Radoslaw Wojtaszek', whiteRating: 2665, whiteTitle: 'GM', black: 'Nikita Vitiugov', blackRating: 2660, blackTitle: 'GM', result: 'draw', resultText: '½-½', date: '2024-10-25', opening: 'B40 Sicilian Defense', gameType: 'Classical', moves: 63 },
+        ];
+
+        // ========== State ==========
+        let currentView = 'explorer'; // 'explorer', 'search', 'results'
+        let currentDatabase = 'master-games';
+        let searchResults = [];
+        let sortOrder = 'newest';
+
+        // ========== DOM Elements ==========
+        const modeToggleBtn = document.getElementById('modeToggleBtn');
+        const searchIcon = modeToggleBtn.querySelector('.search-icon');
+        const explorerIcon = modeToggleBtn.querySelector('.explorer-icon');
+        const databaseSelect = document.getElementById('databaseSelect');
+        const explorerView = document.getElementById('explorerView');
+        const searchView = document.getElementById('searchView');
+        const resultsView = document.getElementById('resultsView');
+        const searchForm = document.getElementById('searchForm');
+        const resetBtn = document.getElementById('resetBtn');
+        const backToSearchBtn = document.getElementById('backToSearchBtn');
+        const gameList = document.getElementById('gameList');
+        const toast = document.getElementById('toast');
+        const resultsCountNum = document.getElementById('resultsCountNum');
+
+        // Form fields
+        const playerField = document.getElementById('playerField');
+        const playerInput = document.getElementById('playerInput');
+        const whitePlayerField = document.getElementById('whitePlayerField');
+        const blackPlayerField = document.getElementById('blackPlayerField');
+        const ignoreColorsField = document.getElementById('ignoreColorsField');
+        const colorField = document.getElementById('colorField');
+        const opponentField = document.getElementById('opponentField');
+        const gameTypeField = document.getElementById('gameTypeField');
+        const resultButtonsField = document.getElementById('resultButtonsField');
+        const resultDropdownField = document.getElementById('resultDropdownField');
+        const titleField = document.getElementById('titleField');
+        const openingField = document.getElementById('openingField');
+        const matchTypeField = document.getElementById('matchTypeField');
+        const ratedField = document.getElementById('ratedField');
+
+        // ========== Initialize Chessboard ==========
+        function initChessboard() {
+            const board = document.getElementById('chessboard');
+            const pieces = {
+                'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+                'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+            };
+            
+            const startPosition = [
+                ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+            ];
+
+            board.innerHTML = '';
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    const isLight = (row + col) % 2 === 0;
+                    square.className = `square ${isLight ? 'light' : 'dark'}`;
+                    
+                    const piece = startPosition[row][col];
+                    if (piece) {
+                        square.textContent = pieces[piece];
+                    }
+                    
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        // ========== View Management ==========
+        function switchView(view) {
+            currentView = view;
+            
+            // Update mode toggle button icon
+            const isSearchMode = view === 'search' || view === 'results';
+            searchIcon.style.display = isSearchMode ? 'none' : 'block';
+            explorerIcon.style.display = isSearchMode ? 'block' : 'none';
+            modeToggleBtn.classList.toggle('active', isSearchMode);
+            modeToggleBtn.title = isSearchMode ? 'Back to Explorer' : 'Search Games';
+            
+            // Update views
+            explorerView.classList.toggle('active', view === 'explorer');
+            searchView.classList.toggle('active', view === 'search');
+            resultsView.classList.toggle('active', view === 'results');
+        }
+
+        // ========== Database-aware Form Fields ==========
+        function updateFormFields() {
+            const db = databaseSelect.value;
+            currentDatabase = db;
+
+            // Reset visibility - hide all conditional fields
+            const allFields = [
+                playerField, whitePlayerField, blackPlayerField, ignoreColorsField,
+                colorField, opponentField, gameTypeField, resultButtonsField, resultDropdownField,
+                titleField, openingField, matchTypeField, ratedField
+            ];
+            
+            allFields.forEach(field => field.classList.add('hidden'));
+
+            // Show fields based on database
+            switch(db) {
+                case 'my-games':
+                    playerField.classList.remove('hidden');
+                    playerInput.value = CURRENT_USER;
+                    playerInput.readOnly = true;
+                    playerInput.classList.add('prefilled');
+                    colorField.classList.remove('hidden');
+                    opponentField.classList.remove('hidden');
+                    gameTypeField.classList.remove('hidden');
+                    resultDropdownField.classList.remove('hidden'); // Dropdown with detailed options
+                    titleField.classList.remove('hidden');
+                    openingField.classList.remove('hidden');
+                    matchTypeField.classList.remove('hidden');
+                    ratedField.classList.remove('hidden');
+                    break;
+
+                case 'other-players':
+                    playerField.classList.remove('hidden');
+                    playerInput.value = '';
+                    playerInput.readOnly = false;
+                    playerInput.classList.remove('prefilled');
+                    playerInput.placeholder = 'Enter player name';
+                    colorField.classList.remove('hidden');
+                    opponentField.classList.remove('hidden');
+                    gameTypeField.classList.remove('hidden');
+                    resultDropdownField.classList.remove('hidden'); // Dropdown with detailed options
+                    titleField.classList.remove('hidden');
+                    openingField.classList.remove('hidden');
+                    matchTypeField.classList.remove('hidden');
+                    ratedField.classList.remove('hidden');
+                    break;
+
+                case 'master-games':
+                    whitePlayerField.classList.remove('hidden');
+                    blackPlayerField.classList.remove('hidden');
+                    ignoreColorsField.classList.remove('hidden');
+                    resultButtonsField.classList.remove('hidden'); // Simple Win/Loss/Draw buttons
+                    openingField.classList.remove('hidden');
+                    break;
+
+                case 'all-games':
+                    whitePlayerField.classList.remove('hidden');
+                    blackPlayerField.classList.remove('hidden');
+                    ignoreColorsField.classList.remove('hidden');
+                    gameTypeField.classList.remove('hidden');
+                    resultDropdownField.classList.remove('hidden'); // Dropdown with detailed options
+                    openingField.classList.remove('hidden');
+                    matchTypeField.classList.remove('hidden');
+                    break;
+            }
+
+            // Date range and rating range are always visible
+            document.getElementById('dateRangeField').classList.remove('hidden');
+            document.getElementById('ratingRangeField').classList.remove('hidden');
+        }
+
+        // ========== Search & Results ==========
+        function performSearch() {
+            // Simulate search - in real implementation, this would filter based on form values
+            searchResults = [...mockGames];
+            resultsCountNum.textContent = searchResults.length;
+            renderGameList();
+            switchView('results');
+        }
+
+        function renderGameList() {
+            let games = [...searchResults];
+            
+            // Sort
+            games.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+            });
+
+            gameList.innerHTML = '';
+            games.forEach(game => gameList.innerHTML += createGameCard(game));
+
+            // Add click handlers
+            document.querySelectorAll('.game-card').forEach(card => {
+                card.addEventListener('click', () => selectGame(card));
+            });
+        }
+
+        function createGameCard(game) {
+            const resultClass = game.result;
+            const resultLabel = game.result === 'win' ? '1-0' : game.result === 'loss' ? '0-1' : '½-½';
+            const year = new Date(game.date).getFullYear();
+            
+            return `
+                <div class="game-card" data-game-id="${game.id}">
+                    <div class="game-players">
+                        <span class="game-player">${game.white}</span>
+                        <span class="game-rating">(${game.whiteRating})</span>
+                        <span class="game-vs">vs</span>
+                        <span class="game-player">${game.black}</span>
+                        <span class="game-rating">(${game.blackRating})</span>
+                    </div>
+                    <span class="game-result ${resultClass}">${resultLabel}</span>
+                    <span class="game-year">${year}</span>
+                </div>
+            `;
+        }
+
+
+        function selectGame(card) {
+            document.querySelectorAll('.game-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            showToast('Game loaded!');
+        }
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function resetForm() {
+            searchForm.reset();
+            document.querySelectorAll('.result-option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelectorAll('.sub-option').forEach(opt => opt.classList.remove('selected'));
+            updateFormFields();
+        }
+
+        // ========== Event Listeners ==========
+        modeToggleBtn.addEventListener('click', () => {
+            // Toggle between explorer and search modes
+            if (currentView === 'explorer') {
+                switchView('search');
+            } else {
+                switchView('explorer');
+            }
+        });
+
+        databaseSelect.addEventListener('change', () => {
+            updateFormFields();
+        });
+
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            performSearch();
+        });
+
+        resetBtn.addEventListener('click', resetForm);
+        backToSearchBtn.addEventListener('click', () => switchView('search'));
+
+        // Result options
+        document.querySelectorAll('.result-option').forEach(option => {
+            option.addEventListener('click', () => {
+                option.classList.toggle('selected');
+            });
+        });
+
+        // Sub options
+        document.querySelectorAll('.sub-option').forEach(option => {
+            option.addEventListener('click', () => {
+                option.classList.toggle('selected');
+            });
+        });
+
+        // Expandable sections
+        document.getElementById('resultDetailsToggle').addEventListener('click', () => {
+            document.getElementById('resultDetailsContent').classList.toggle('open');
+        });
+
+
+        // ========== Initialize ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            initChessboard();
+            updateFormFields();
+        });
+    </script>
+</body>
+</html>
+
