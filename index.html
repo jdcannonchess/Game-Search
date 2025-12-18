@@ -69,8 +69,8 @@
         }
 
         .explorer-sidebar {
-            width: 340px;
-            min-width: 340px;
+            width: 420px;
+            min-width: 420px;
             background: var(--bg-sidebar);
             border-radius: 8px;
             display: flex;
@@ -326,11 +326,11 @@
         /* ========== Sidebar Content ========== */
         .sidebar-content {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 16px;
+            overflow: hidden;
+            padding: 12px;
             display: flex;
             flex-direction: column;
+            min-height: 0; /* Important for nested flex */
         }
 
         /* Explorer View */
@@ -340,12 +340,14 @@
 
         .explorer-view.active {
             display: block;
+            overflow-y: auto;
         }
 
         .results-view.active {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            flex: 1;
+            min-height: 0;
         }
 
         .results-view .results-header,
@@ -357,27 +359,28 @@
         .results-view .game-list {
             flex: 1;
             overflow-y: auto;
+            min-height: 0;
         }
 
         .search-view.active {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            flex: 1;
+            min-height: 0;
         }
 
         .search-view .search-form {
             flex: 1;
             overflow-y: auto;
             padding-bottom: 8px;
+            min-height: 0; /* Important for flex overflow */
         }
 
         .search-view .search-actions {
             flex-shrink: 0;
-            position: sticky;
-            bottom: 0;
-            background: var(--bg-secondary);
+            background: var(--bg-sidebar);
             padding-top: 12px;
-            margin-top: auto;
+            border-top: 1px solid var(--border-color);
         }
 
         /* Position Info */
@@ -578,9 +581,128 @@
             font-weight: 600;
         }
 
-        .result-option.win { border-left: 3px solid var(--win-color); }
-        .result-option.loss { border-left: 3px solid var(--loss-color); }
+        .result-option.white-win { border-left: 3px solid var(--win-color); }
+        .result-option.black-win { border-left: 3px solid #333; }
         .result-option.draw { border-left: 3px solid var(--draw-color); }
+
+        /* Multi-select dropdown styling */
+        .multi-select-wrapper {
+            position: relative;
+        }
+
+        .multi-select-display {
+            padding: 8px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            min-height: 36px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .multi-select-display:hover {
+            border-color: var(--accent-green);
+        }
+
+        .multi-select-display.open {
+            border-color: var(--accent-green);
+        }
+
+        .multi-select-placeholder {
+            color: var(--text-muted);
+        }
+
+        .multi-select-tag {
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .multi-select-tag-remove {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .multi-select-tag-remove:hover {
+            opacity: 1;
+        }
+
+        .multi-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-input);
+            border: 1px solid var(--accent-green);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            z-index: 100;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .multi-select-dropdown.open {
+            display: block;
+        }
+
+        .multi-select-option {
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .multi-select-option:hover {
+            background: var(--bg-hover);
+        }
+
+        .multi-select-option.selected {
+            background: rgba(129, 182, 76, 0.2);
+        }
+
+        .multi-select-checkbox {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--accent-green);
+        }
+
+        /* FEN Pull Button */
+        .btn-pull {
+            padding: 8px 12px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-pull:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        /* Move count operator select */
+        .move-count-operator {
+            width: 50px;
+            flex-shrink: 0;
+        }
 
         /* Expandable Section */
         .expandable-section {
@@ -645,7 +767,6 @@
             display: flex;
             gap: 8px;
             padding: 12px 0;
-            border-top: 1px solid var(--border-color);
         }
 
         .btn-search {
@@ -730,11 +851,62 @@
         }
 
 
+        /* Column Headers */
+        .results-columns {
+            display: flex;
+            align-items: center;
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        .column-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.15s;
+            user-select: none;
+        }
+
+        .column-header:hover {
+            color: var(--text-primary);
+        }
+
+        .column-header.active {
+            color: var(--accent-green);
+        }
+
+        .column-header .sort-arrow {
+            font-size: 10px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .column-header.active .sort-arrow {
+            opacity: 1;
+        }
+
+        /* Column widths - must match game card */
+        .col-white { width: 95px; flex-shrink: 0; }
+        .col-white-rating { width: 42px; flex-shrink: 0; }
+        .col-black { width: 95px; flex-shrink: 0; }
+        .col-black-rating { width: 42px; flex-shrink: 0; }
+        .col-result { width: 36px; flex-shrink: 0; text-align: center; }
+        .col-year { width: 36px; flex-shrink: 0; text-align: center; }
+        .col-select { width: 24px; flex-shrink: 0; text-align: center; }
+
         /* Game List */
         .game-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 2px;
         }
 
         .result-group {
@@ -760,13 +932,12 @@
             background: transparent;
             border: none;
             border-radius: 4px;
-            padding: 6px 8px;
+            padding: 5px 4px;
             cursor: pointer;
             transition: all 0.15s;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 8px;
+            gap: 0;
         }
 
         .game-card:hover {
@@ -777,83 +948,77 @@
             background: var(--bg-input);
         }
 
-        .game-info {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .game-players {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .game-player {
+        .game-card .game-white,
+        .game-card .game-black {
             font-size: 12px;
-            display: flex;
-            align-items: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            gap: 4px;
         }
 
-        .game-player .rating {
-            color: var(--text-secondary);
-            font-size: 12px;
-        }
-
-        .game-player .title {
-            color: var(--accent-gold);
-            font-weight: 600;
-            font-size: 11px;
-        }
-
-        .game-vs {
-            color: var(--text-muted);
-            font-size: 11px;
-            flex-shrink: 0;
-        }
+        .game-card .game-white { width: 95px; flex-shrink: 0; }
+        .game-card .game-white-rating { width: 42px; flex-shrink: 0; font-size: 11px; color: var(--text-muted); }
+        .game-card .game-black { width: 95px; flex-shrink: 0; }
+        .game-card .game-black-rating { width: 42px; flex-shrink: 0; font-size: 11px; color: var(--text-muted); }
 
         .game-result {
+            width: 36px;
+            flex-shrink: 0;
             font-weight: 600;
             font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            flex-shrink: 0;
+            text-align: center;
         }
 
-        .game-result.win {
-            background: rgba(129, 182, 76, 0.2);
-            color: var(--win-color);
-        }
-
-        .game-result.loss {
-            background: rgba(231, 76, 60, 0.2);
-            color: var(--loss-color);
-        }
-
-        .game-result.draw {
-            background: rgba(158, 158, 158, 0.2);
-            color: var(--draw-color);
-        }
+        .game-result.win { color: var(--win-color); }
+        .game-result.loss { color: var(--loss-color); }
+        .game-result.draw { color: var(--draw-color); }
 
         .game-year {
+            width: 36px;
+            flex-shrink: 0;
             font-size: 11px;
             color: var(--text-muted);
+            text-align: center;
+        }
+
+        .game-select {
+            width: 24px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-select input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--accent-green);
+            cursor: pointer;
+        }
+
+        /* Add Games Button */
+        .add-games-btn {
+            display: none;
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--accent-green);
+            border: none;
+            border-radius: 6px;
+            color: var(--bg-dark);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background 0.15s;
             flex-shrink: 0;
         }
 
-        .game-rating {
-            font-size: 11px;
-            color: var(--text-muted);
+        .add-games-btn:hover {
+            background: var(--accent-green-hover);
+        }
+
+        .add-games-btn.visible {
+            display: block;
         }
 
         /* ========== Scrollbar ========== */
@@ -1134,158 +1299,145 @@
                     <!-- Search View (NEW) -->
                     <div class="search-view" id="searchView">
                         <form class="search-form" id="searchForm">
-                            <!-- My Games / Other Players Fields -->
-                            <div class="form-group" id="playerField">
-                                <input type="text" class="form-input prefilled" id="playerInput" value="jdcannon" readonly placeholder="Player">
+                            <!-- White Player -->
+                            <div class="form-group" id="whitePlayerField">
+                                <input type="text" class="form-input" id="whitePlayerInput" placeholder="White Player">
                             </div>
 
-                            <!-- Master Games / All Games Fields -->
-                            <div class="form-inline">
-                                <div class="form-group hidden" id="whitePlayerField">
-                                    <input type="text" class="form-input" id="whitePlayerInput" placeholder="White Player *">
-                                </div>
-                                <div class="form-group hidden" id="blackPlayerField">
-                                    <input type="text" class="form-input" id="blackPlayerInput" placeholder="Black Player">
+                            <!-- White Player Rating Range -->
+                            <div class="form-group" id="whiteRatingField">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <input type="number" class="form-input" id="whiteRatingMin" placeholder="White Min">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-input" id="whiteRatingMax" placeholder="White Max">
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="checkbox-group hidden" id="ignoreColorsField">
+                            <!-- Ignore Colors -->
+                            <div class="checkbox-group" id="ignoreColorsField">
                                 <input type="checkbox" id="ignoreColors">
                                 <label class="checkbox-label" for="ignoreColors">Ignore Colors</label>
                             </div>
 
-                            <div class="form-inline">
-                                <div class="form-group" id="colorField">
-                                    <select class="form-select" id="colorSelect">
-                                        <option value="">Color</option>
-                                        <option value="white">White</option>
-                                        <option value="black">Black</option>
-                                    </select>
-                                </div>
-                                <div class="form-group" id="gameTypeField">
-                                    <select class="form-select" id="gameTypeSelect">
-                                        <option value="">Game Type</option>
-                                        <option value="bullet">Bullet</option>
-                                        <option value="blitz">Blitz</option>
-                                        <option value="rapid">Rapid</option>
-                                        <option value="daily">Daily</option>
-                                    </select>
+                            <!-- Black Player -->
+                            <div class="form-group" id="blackPlayerField">
+                                <input type="text" class="form-input" id="blackPlayerInput" placeholder="Black Player">
+                            </div>
+
+                            <!-- Black Player Rating Range -->
+                            <div class="form-group" id="blackRatingField">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <input type="number" class="form-input" id="blackRatingMin" placeholder="Black Min">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-input" id="blackRatingMax" placeholder="Black Max">
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="form-group" id="opponentField">
-                                <input type="text" class="form-input" id="opponentInput" placeholder="Opponent">
+                            <!-- Game Type (Multi-select) -->
+                            <div class="form-group" id="gameTypeField">
+                                <div class="multi-select-wrapper" id="gameTypeWrapper">
+                                    <div class="multi-select-display" id="gameTypeDisplay">
+                                        <span class="multi-select-placeholder">Game Type</span>
+                                    </div>
+                                    <div class="multi-select-dropdown" id="gameTypeDropdown">
+                                        <label class="multi-select-option" data-value="daily">
+                                            <input type="checkbox" class="multi-select-checkbox" value="daily"> Daily
+                                        </label>
+                                        <label class="multi-select-option" data-value="rapid">
+                                            <input type="checkbox" class="multi-select-checkbox" value="rapid"> Rapid
+                                        </label>
+                                        <label class="multi-select-option" data-value="bullet">
+                                            <input type="checkbox" class="multi-select-checkbox" value="bullet"> Bullet
+                                        </label>
+                                        <label class="multi-select-option" data-value="blitz">
+                                            <input type="checkbox" class="multi-select-checkbox" value="blitz"> Blitz
+                                        </label>
+                                        <label class="multi-select-option" data-value="960">
+                                            <input type="checkbox" class="multi-select-checkbox" value="960"> 960
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Result Buttons (Master Games only - simple Win/Loss/Draw) -->
-                            <div class="form-group hidden" id="resultButtonsField">
+                            <!-- Result (Multi-select with White Won, Black Won, Draw) -->
+                            <div class="form-group" id="resultField">
                                 <div class="result-options" id="resultOptions">
-                                    <div class="result-option win" data-value="won">Win</div>
-                                    <div class="result-option loss" data-value="lost">Loss</div>
+                                    <div class="result-option white-win" data-value="white-won">White Won</div>
+                                    <div class="result-option black-win" data-value="black-won">Black Won</div>
                                     <div class="result-option draw" data-value="draw">Draw</div>
                                 </div>
                             </div>
 
-                            <!-- Result Dropdown (My Games, Other Players, All Games - detailed options) -->
-                            <div class="form-group hidden" id="resultDropdownField">
-                                <select class="form-select" id="resultSelect">
-                                    <option value="">Result</option>
-                                    <optgroup label="Won">
-                                        <option value="won">Won (Any)</option>
-                                        <option value="won-checkmate">Won by Checkmate</option>
-                                        <option value="won-resignation">Won by Resignation</option>
-                                        <option value="won-timeout">Won by Timeout</option>
-                                        <option value="won-abandonment">Won by Abandonment</option>
-                                    </optgroup>
-                                    <optgroup label="Lost">
-                                        <option value="lost">Lost (Any)</option>
-                                        <option value="lost-checkmate">Lost by Checkmate</option>
-                                        <option value="lost-resignation">Lost by Resignation</option>
-                                        <option value="lost-timeout">Lost by Timeout</option>
-                                        <option value="lost-abandonment">Lost by Abandonment</option>
-                                    </optgroup>
-                                    <optgroup label="Draw">
-                                        <option value="draw">Draw (Any)</option>
-                                        <option value="draw-agreement">Draw by Agreement</option>
-                                        <option value="draw-repetition">Draw by Repetition</option>
-                                        <option value="draw-stalemate">Draw by Stalemate</option>
-                                        <option value="draw-insufficient">Draw by Insufficient Material</option>
-                                        <option value="draw-timeout-insufficient">Draw by Timeout vs Insufficient</option>
-                                        <option value="draw-50move">Draw by 50-move Rule</option>
-                                    </optgroup>
-                                </select>
-                            </div>
-
-                            <div class="form-inline">
-                                <div class="form-group" id="titleField">
-                                    <select class="form-select" id="titleSelect">
-                                        <option value="">Title</option>
-                                        <option value="GM">GM</option>
-                                        <option value="IM">IM</option>
-                                        <option value="FM">FM</option>
-                                        <option value="WGM">WGM</option>
-                                        <option value="WIM">WIM</option>
-                                        <option value="WFM">WFM</option>
-                                        <option value="CM">CM</option>
-                                        <option value="WCM">WCM</option>
-                                        <option value="NM">NM</option>
+                            <!-- Move Count -->
+                            <div class="form-group" id="moveCountField">
+                                <div class="form-row">
+                                    <select class="form-select move-count-operator" id="moveCountOperator">
+                                        <option value=">">&gt;</option>
+                                        <option value="<">&lt;</option>
+                                        <option value="=">=</option>
                                     </select>
-                                </div>
-                                <div class="form-group" id="matchTypeField">
-                                    <select class="form-select" id="matchTypeSelect">
-                                        <option value="">Match Type</option>
-                                        <option value="tournament">Tournament</option>
-                                        <option value="team-match">Team Match</option>
-                                    </select>
+                                    <input type="number" class="form-input" id="moveCountValue" placeholder="Move Count">
                                 </div>
                             </div>
 
-                            <div class="form-group hidden" id="openingField">
-                                <select class="form-select" id="openingSelect">
+                            <!-- FEN -->
+                            <div class="form-group" id="fenField">
+                                <div class="form-row">
+                                    <input type="text" class="form-input" id="fenInput" placeholder="FEN Position">
+                                    <button type="button" class="btn-pull" id="pullFenBtn">Pull</button>
+                                </div>
+                            </div>
+
+                            <!-- Opening -->
+                            <div class="form-group" id="openingFamiliesField">
+                                <select class="form-select" id="openingFamiliesSelect">
                                     <option value="">Opening</option>
-                                    <optgroup label="A - Flank Openings">
-                                        <option value="A00-A09">A00-A09: Uncommon</option>
-                                        <option value="A10-A39">A10-A39: English</option>
-                                        <option value="A40-A44">A40-A44: Queen's Pawn</option>
-                                        <option value="A45-A49">A45-A49: Indian Game</option>
-                                        <option value="A50-A79">A50-A79: Indian Defenses</option>
-                                        <option value="A80-A99">A80-A99: Dutch</option>
-                                    </optgroup>
-                                    <optgroup label="B - Semi-Open">
-                                        <option value="B00-B09">B00-B09: Uncommon e4</option>
-                                        <option value="B10-B19">B10-B19: Caro-Kann</option>
-                                        <option value="B20-B99">B20-B99: Sicilian</option>
-                                    </optgroup>
-                                    <optgroup label="C - Open Games">
-                                        <option value="C00-C19">C00-C19: French</option>
-                                        <option value="C20-C29">C20-C29: King's Pawn</option>
-                                        <option value="C30-C39">C30-C39: King's Gambit</option>
-                                        <option value="C40-C49">C40-C49: Open Game</option>
-                                        <option value="C50-C59">C50-C59: Italian</option>
-                                        <option value="C60-C99">C60-C99: Ruy Lopez</option>
-                                    </optgroup>
-                                    <optgroup label="D - Closed">
-                                        <option value="D00-D05">D00-D05: Queen's Pawn</option>
-                                        <option value="D06-D69">D06-D69: Queen's Gambit</option>
-                                        <option value="D70-D99">D70-D99: Grünfeld</option>
-                                    </optgroup>
-                                    <optgroup label="E - Indian">
-                                        <option value="E00-E09">E00-E09: Catalan</option>
-                                        <option value="E10-E19">E10-E19: Queen's Indian</option>
-                                        <option value="E20-E59">E20-E59: Nimzo-Indian</option>
-                                        <option value="E60-E99">E60-E99: King's Indian</option>
-                                    </optgroup>
+                                    <option value="sicilian">Sicilian Defense</option>
+                                    <option value="french">French Defense</option>
+                                    <option value="italian">Italian Game</option>
+                                    <option value="ruy-lopez">Ruy Lopez</option>
+                                    <option value="queens-gambit">Queen's Gambit</option>
+                                    <option value="kings-indian">King's Indian</option>
+                                    <option value="nimzo-indian">Nimzo-Indian</option>
+                                    <option value="caro-kann">Caro-Kann</option>
+                                    <option value="english">English Opening</option>
+                                    <option value="dutch">Dutch Defense</option>
                                 </select>
                             </div>
 
+                            <!-- Match Type -->
+                            <div class="form-group" id="matchTypeField">
+                                <select class="form-select" id="matchTypeSelect">
+                                    <option value="">Match Type</option>
+                                    <option value="tournament">Tournament</option>
+                                    <option value="team-match">Team Match</option>
+                                </select>
+                            </div>
+
+                            <!-- Rated/Unrated (Multi-select) -->
                             <div class="form-group" id="ratedField">
-                                <select class="form-select" id="ratedSelect">
-                                    <option value="">Rated</option>
-                                    <option value="rated">Rated Only</option>
-                                    <option value="unrated">Unrated Only</option>
-                                </select>
+                                <div class="multi-select-wrapper" id="ratedWrapper">
+                                    <div class="multi-select-display" id="ratedDisplay">
+                                        <span class="multi-select-placeholder">Rated/Unrated</span>
+                                    </div>
+                                    <div class="multi-select-dropdown" id="ratedDropdown">
+                                        <label class="multi-select-option" data-value="rated">
+                                            <input type="checkbox" class="multi-select-checkbox" value="rated"> Rated
+                                        </label>
+                                        <label class="multi-select-option" data-value="unrated">
+                                            <input type="checkbox" class="multi-select-checkbox" value="unrated"> Unrated
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
 
+                            <!-- Date Range -->
                             <div class="form-group" id="dateRangeField">
                                 <div class="form-row">
                                     <div class="form-group">
@@ -1296,23 +1448,12 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="form-group" id="ratingRangeField">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <input type="number" class="form-input" id="ratingMin" placeholder="Min Rating">
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="number" class="form-input" id="ratingMax" placeholder="Max Rating">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="search-actions">
-                                <button type="button" class="btn-reset" id="resetBtn">Reset</button>
-                                <button type="submit" class="btn-search" id="searchBtn">Search</button>
-                            </div>
                         </form>
+
+                        <div class="search-actions">
+                            <button type="button" class="btn-reset" id="resetBtn">Reset</button>
+                            <button type="submit" class="btn-search" id="searchBtn" form="searchForm">Search</button>
+                        </div>
                     </div>
 
                     <!-- Results View (NEW) -->
@@ -1326,9 +1467,21 @@
                             </button>
                         </div>
 
+                        <div class="results-columns" id="resultsColumns">
+                            <span class="column-header col-white" data-sort="white">White <span class="sort-arrow">▼</span></span>
+                            <span class="column-header col-white-rating" data-sort="whiteRating">Rtg <span class="sort-arrow">▼</span></span>
+                            <span class="column-header col-black" data-sort="black">Black <span class="sort-arrow">▼</span></span>
+                            <span class="column-header col-black-rating" data-sort="blackRating">Rtg <span class="sort-arrow">▼</span></span>
+                            <span class="column-header col-result" data-sort="result">Result <span class="sort-arrow">▼</span></span>
+                            <span class="column-header col-year active" data-sort="year">Year <span class="sort-arrow">▼</span></span>
+                            <span class="col-select"></span>
+                        </div>
+
                         <div class="game-list" id="gameList">
                             <!-- Games will be populated by JavaScript -->
                         </div>
+
+                        <button class="add-games-btn" id="addGamesBtn">Add Games</button>
                     </div>
                 </div>
             </aside>
@@ -1340,6 +1493,7 @@
     <script>
         // ========== Configuration ==========
         const CURRENT_USER = 'jdcannon';
+        const MOCK_FEN = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1';
 
         // ========== Mock Data ==========
         const mockGames = [
@@ -1361,7 +1515,8 @@
         let currentView = 'explorer'; // 'explorer', 'search', 'results'
         let currentDatabase = 'master-games';
         let searchResults = [];
-        let sortOrder = 'newest';
+        let sortColumn = 'year';
+        let sortDirection = 'desc'; // 'desc' or 'asc'
 
         // ========== DOM Elements ==========
         const modeToggleBtn = document.getElementById('modeToggleBtn');
@@ -1377,22 +1532,28 @@
         const gameList = document.getElementById('gameList');
         const toast = document.getElementById('toast');
         const resultsCountNum = document.getElementById('resultsCountNum');
+        const addGamesBtn = document.getElementById('addGamesBtn');
+        let selectedGames = new Set();
 
-        // Form fields
-        const playerField = document.getElementById('playerField');
-        const playerInput = document.getElementById('playerInput');
+        // Form field elements
         const whitePlayerField = document.getElementById('whitePlayerField');
+        const whitePlayerInput = document.getElementById('whitePlayerInput');
+        const whiteRatingField = document.getElementById('whiteRatingField');
         const blackPlayerField = document.getElementById('blackPlayerField');
+        const blackPlayerInput = document.getElementById('blackPlayerInput');
+        const blackRatingField = document.getElementById('blackRatingField');
         const ignoreColorsField = document.getElementById('ignoreColorsField');
-        const colorField = document.getElementById('colorField');
-        const opponentField = document.getElementById('opponentField');
+        const ignoreColorsCheckbox = document.getElementById('ignoreColors');
         const gameTypeField = document.getElementById('gameTypeField');
-        const resultButtonsField = document.getElementById('resultButtonsField');
-        const resultDropdownField = document.getElementById('resultDropdownField');
-        const titleField = document.getElementById('titleField');
-        const openingField = document.getElementById('openingField');
+        const resultField = document.getElementById('resultField');
+        const moveCountField = document.getElementById('moveCountField');
+        const fenField = document.getElementById('fenField');
+        const fenInput = document.getElementById('fenInput');
+        const pullFenBtn = document.getElementById('pullFenBtn');
+        const openingFamiliesField = document.getElementById('openingFamiliesField');
         const matchTypeField = document.getElementById('matchTypeField');
         const ratedField = document.getElementById('ratedField');
+        const dateRangeField = document.getElementById('dateRangeField');
 
         // ========== Initialize Chessboard ==========
         function initChessboard() {
@@ -1454,74 +1615,170 @@
 
             // Reset visibility - hide all conditional fields
             const allFields = [
-                playerField, whitePlayerField, blackPlayerField, ignoreColorsField,
-                colorField, opponentField, gameTypeField, resultButtonsField, resultDropdownField,
-                titleField, openingField, matchTypeField, ratedField
+                whitePlayerField, whiteRatingField, blackPlayerField, blackRatingField,
+                ignoreColorsField, gameTypeField, resultField, moveCountField, fenField,
+                openingFamiliesField, matchTypeField, ratedField, dateRangeField
             ];
             
             allFields.forEach(field => field.classList.add('hidden'));
 
+            // Reset player input states
+            whitePlayerInput.readOnly = false;
+            whitePlayerInput.classList.remove('prefilled');
+            whitePlayerInput.value = '';
+            whitePlayerInput.placeholder = 'White Player';
+
+            // Common fields shown for all databases
+            whitePlayerField.classList.remove('hidden');
+            whiteRatingField.classList.remove('hidden');
+            ignoreColorsField.classList.remove('hidden');
+            blackPlayerField.classList.remove('hidden');
+            blackRatingField.classList.remove('hidden');
+            resultField.classList.remove('hidden');
+            moveCountField.classList.remove('hidden');
+            fenField.classList.remove('hidden');
+            openingFamiliesField.classList.remove('hidden');
+            dateRangeField.classList.remove('hidden');
+
             // Show fields based on database
             switch(db) {
                 case 'my-games':
-                    playerField.classList.remove('hidden');
-                    playerInput.value = CURRENT_USER;
-                    playerInput.readOnly = true;
-                    playerInput.classList.add('prefilled');
-                    colorField.classList.remove('hidden');
-                    opponentField.classList.remove('hidden');
+                    // White Player prefilled with username
+                    whitePlayerInput.value = CURRENT_USER;
+                    whitePlayerInput.readOnly = true;
+                    whitePlayerInput.classList.add('prefilled');
+                    // Ignore colors default checked
+                    ignoreColorsCheckbox.checked = true;
+                    // Additional fields
                     gameTypeField.classList.remove('hidden');
-                    resultDropdownField.classList.remove('hidden'); // Dropdown with detailed options
-                    titleField.classList.remove('hidden');
-                    openingField.classList.remove('hidden');
                     matchTypeField.classList.remove('hidden');
                     ratedField.classList.remove('hidden');
                     break;
 
                 case 'other-players':
-                    playerField.classList.remove('hidden');
-                    playerInput.value = '';
-                    playerInput.readOnly = false;
-                    playerInput.classList.remove('prefilled');
-                    playerInput.placeholder = 'Enter player name';
-                    colorField.classList.remove('hidden');
-                    opponentField.classList.remove('hidden');
+                    whitePlayerInput.placeholder = 'White Player';
                     gameTypeField.classList.remove('hidden');
-                    resultDropdownField.classList.remove('hidden'); // Dropdown with detailed options
-                    titleField.classList.remove('hidden');
-                    openingField.classList.remove('hidden');
                     matchTypeField.classList.remove('hidden');
                     ratedField.classList.remove('hidden');
+                    ignoreColorsCheckbox.checked = false;
                     break;
 
                 case 'master-games':
-                    whitePlayerField.classList.remove('hidden');
-                    blackPlayerField.classList.remove('hidden');
-                    ignoreColorsField.classList.remove('hidden');
-                    resultButtonsField.classList.remove('hidden'); // Simple Win/Loss/Draw buttons
-                    openingField.classList.remove('hidden');
+                    // Master games: no game type, match type, or rated fields
+                    ignoreColorsCheckbox.checked = false;
                     break;
 
                 case 'all-games':
-                    whitePlayerField.classList.remove('hidden');
-                    blackPlayerField.classList.remove('hidden');
-                    ignoreColorsField.classList.remove('hidden');
                     gameTypeField.classList.remove('hidden');
-                    resultDropdownField.classList.remove('hidden'); // Dropdown with detailed options
-                    openingField.classList.remove('hidden');
                     matchTypeField.classList.remove('hidden');
+                    ignoreColorsCheckbox.checked = false;
+                    // Note: no rated field for all-games per spec
                     break;
             }
 
-            // Date range and rating range are always visible
-            document.getElementById('dateRangeField').classList.remove('hidden');
-            document.getElementById('ratingRangeField').classList.remove('hidden');
+            // Handle rating range editability based on player fields
+            updateRatingRangeState();
+        }
+
+        // ========== Rating Range Editability ==========
+        function updateRatingRangeState() {
+            const whiteMin = document.getElementById('whiteRatingMin');
+            const whiteMax = document.getElementById('whiteRatingMax');
+            const blackMin = document.getElementById('blackRatingMin');
+            const blackMax = document.getElementById('blackRatingMax');
+
+            // White rating range disabled if white player is filled
+            const whitePlayerFilled = whitePlayerInput.value.trim() !== '';
+            whiteMin.disabled = whitePlayerFilled;
+            whiteMax.disabled = whitePlayerFilled;
+            if (whitePlayerFilled) {
+                whiteMin.value = '';
+                whiteMax.value = '';
+            }
+
+            // Black rating range disabled if black player is filled
+            const blackPlayerFilled = blackPlayerInput.value.trim() !== '';
+            blackMin.disabled = blackPlayerFilled;
+            blackMax.disabled = blackPlayerFilled;
+            if (blackPlayerFilled) {
+                blackMin.value = '';
+                blackMax.value = '';
+            }
+        }
+
+        // ========== Multi-Select Dropdowns ==========
+        function initMultiSelects() {
+            // Game Type multi-select
+            initMultiSelect('gameType');
+            // Rated multi-select
+            initMultiSelect('rated');
+        }
+
+        function initMultiSelect(name) {
+            const display = document.getElementById(`${name}Display`);
+            const dropdown = document.getElementById(`${name}Dropdown`);
+            const wrapper = document.getElementById(`${name}Wrapper`);
+
+            if (!display || !dropdown) return;
+
+            // Toggle dropdown
+            display.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
+                display.classList.toggle('open');
+            });
+
+            // Handle option selection
+            dropdown.querySelectorAll('.multi-select-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    updateMultiSelectDisplay(name);
+                });
+            });
+
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target)) {
+                    dropdown.classList.remove('open');
+                    display.classList.remove('open');
+                }
+            });
+        }
+
+        function updateMultiSelectDisplay(name) {
+            const display = document.getElementById(`${name}Display`);
+            const dropdown = document.getElementById(`${name}Dropdown`);
+            const placeholder = name === 'gameType' ? 'Game Type' : 'Rated/Unrated';
+
+            const selected = [];
+            dropdown.querySelectorAll('.multi-select-checkbox:checked').forEach(checkbox => {
+                selected.push(checkbox.value);
+            });
+
+            if (selected.length === 0) {
+                display.innerHTML = `<span class="multi-select-placeholder">${placeholder}</span>`;
+            } else {
+                display.innerHTML = selected.map(val => 
+                    `<span class="multi-select-tag">${val}<span class="multi-select-tag-remove" data-value="${val}">×</span></span>`
+                ).join('');
+
+                // Add remove handlers
+                display.querySelectorAll('.multi-select-tag-remove').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const value = btn.dataset.value;
+                        const checkbox = dropdown.querySelector(`.multi-select-checkbox[value="${value}"]`);
+                        if (checkbox) checkbox.checked = false;
+                        updateMultiSelectDisplay(name);
+                    });
+                });
+            }
         }
 
         // ========== Search & Results ==========
         function performSearch() {
             // Simulate search - in real implementation, this would filter based on form values
             searchResults = [...mockGames];
+            selectedGames.clear(); // Reset selections on new search
             resultsCountNum.textContent = searchResults.length;
             renderGameList();
             switchView('results');
@@ -1530,20 +1787,118 @@
         function renderGameList() {
             let games = [...searchResults];
             
-            // Sort
+            // Sort by current column and direction
             games.sort((a, b) => {
-                const dateA = new Date(a.date);
-                const dateB = new Date(b.date);
-                return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+                let valA, valB;
+                
+                switch(sortColumn) {
+                    case 'white':
+                        valA = a.white.toLowerCase();
+                        valB = b.white.toLowerCase();
+                        break;
+                    case 'whiteRating':
+                        valA = a.whiteRating;
+                        valB = b.whiteRating;
+                        break;
+                    case 'black':
+                        valA = a.black.toLowerCase();
+                        valB = b.black.toLowerCase();
+                        break;
+                    case 'blackRating':
+                        valA = a.blackRating;
+                        valB = b.blackRating;
+                        break;
+                    case 'result':
+                        // Sort order: win > draw > loss
+                        const resultOrder = { win: 3, draw: 2, loss: 1 };
+                        valA = resultOrder[a.result];
+                        valB = resultOrder[b.result];
+                        break;
+                    case 'year':
+                    default:
+                        valA = new Date(a.date);
+                        valB = new Date(b.date);
+                        break;
+                }
+                
+                let comparison = 0;
+                if (valA < valB) comparison = -1;
+                if (valA > valB) comparison = 1;
+                
+                return sortDirection === 'desc' ? -comparison : comparison;
             });
 
             gameList.innerHTML = '';
             games.forEach(game => gameList.innerHTML += createGameCard(game));
 
-            // Add click handlers
+            // Add click handlers for game cards (but not checkboxes)
             document.querySelectorAll('.game-card').forEach(card => {
-                card.addEventListener('click', () => selectGame(card));
+                card.addEventListener('click', (e) => {
+                    // Don't trigger card selection when clicking checkbox
+                    if (e.target.type !== 'checkbox') {
+                        selectGame(card);
+                    }
+                });
             });
+
+            // Add checkbox handlers
+            document.querySelectorAll('.game-checkbox').forEach(checkbox => {
+                // Restore checked state
+                if (selectedGames.has(checkbox.dataset.gameId)) {
+                    checkbox.checked = true;
+                }
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const gameId = checkbox.dataset.gameId;
+                    if (checkbox.checked) {
+                        selectedGames.add(gameId);
+                    } else {
+                        selectedGames.delete(gameId);
+                    }
+                    updateAddGamesButton();
+                });
+            });
+
+            // Update column header visual state
+            updateColumnHeaders();
+            updateAddGamesButton();
+        }
+
+        function updateAddGamesButton() {
+            const count = selectedGames.size;
+            if (count > 0) {
+                addGamesBtn.textContent = `Add ${count} Game${count > 1 ? 's' : ''}`;
+                addGamesBtn.classList.add('visible');
+            } else {
+                addGamesBtn.classList.remove('visible');
+            }
+        }
+
+        function updateColumnHeaders() {
+            document.querySelectorAll('.column-header').forEach(header => {
+                const column = header.dataset.sort;
+                const arrow = header.querySelector('.sort-arrow');
+                
+                if (column === sortColumn) {
+                    header.classList.add('active');
+                    arrow.textContent = sortDirection === 'desc' ? '▼' : '▲';
+                } else {
+                    header.classList.remove('active');
+                    arrow.textContent = '▼';
+                }
+            });
+        }
+
+        function handleColumnSort(column) {
+            if (sortColumn === column) {
+                // Toggle direction
+                sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+            } else {
+                // New column, start with desc
+                sortColumn = column;
+                sortDirection = 'desc';
+            }
+            renderGameList();
         }
 
         function createGameCard(game) {
@@ -1553,19 +1908,18 @@
             
             return `
                 <div class="game-card" data-game-id="${game.id}">
-                    <div class="game-players">
-                        <span class="game-player">${game.white}</span>
-                        <span class="game-rating">(${game.whiteRating})</span>
-                        <span class="game-vs">vs</span>
-                        <span class="game-player">${game.black}</span>
-                        <span class="game-rating">(${game.blackRating})</span>
-                    </div>
+                    <span class="game-white">${game.white}</span>
+                    <span class="game-white-rating">${game.whiteRating}</span>
+                    <span class="game-black">${game.black}</span>
+                    <span class="game-black-rating">${game.blackRating}</span>
                     <span class="game-result ${resultClass}">${resultLabel}</span>
                     <span class="game-year">${year}</span>
+                    <span class="game-select">
+                        <input type="checkbox" class="game-checkbox" data-game-id="${game.id}">
+                    </span>
                 </div>
             `;
         }
-
 
         function selectGame(card) {
             document.querySelectorAll('.game-card').forEach(c => c.classList.remove('selected'));
@@ -1581,8 +1935,13 @@
 
         function resetForm() {
             searchForm.reset();
+            // Reset result options
             document.querySelectorAll('.result-option').forEach(opt => opt.classList.remove('selected'));
-            document.querySelectorAll('.sub-option').forEach(opt => opt.classList.remove('selected'));
+            // Reset multi-selects
+            document.querySelectorAll('.multi-select-checkbox').forEach(cb => cb.checked = false);
+            updateMultiSelectDisplay('gameType');
+            updateMultiSelectDisplay('rated');
+            // Update fields based on current database
             updateFormFields();
         }
 
@@ -1608,29 +1967,44 @@
         resetBtn.addEventListener('click', resetForm);
         backToSearchBtn.addEventListener('click', () => switchView('search'));
 
-        // Result options
+        // Column header sorting
+        document.querySelectorAll('.column-header').forEach(header => {
+            header.addEventListener('click', () => {
+                handleColumnSort(header.dataset.sort);
+            });
+        });
+
+        // Result options (multi-select toggle)
         document.querySelectorAll('.result-option').forEach(option => {
             option.addEventListener('click', () => {
                 option.classList.toggle('selected');
             });
         });
 
-        // Sub options
-        document.querySelectorAll('.sub-option').forEach(option => {
-            option.addEventListener('click', () => {
-                option.classList.toggle('selected');
-            });
+        // Pull FEN button
+        pullFenBtn.addEventListener('click', () => {
+            fenInput.value = MOCK_FEN;
+            showToast('FEN pulled from board');
         });
 
-        // Expandable sections
-        document.getElementById('resultDetailsToggle').addEventListener('click', () => {
-            document.getElementById('resultDetailsContent').classList.toggle('open');
+        // Add Games button
+        addGamesBtn.addEventListener('click', () => {
+            const count = selectedGames.size;
+            showToast(`${count} game${count > 1 ? 's' : ''} added!`);
+            selectedGames.clear();
+            updateAddGamesButton();
+            // Uncheck all checkboxes
+            document.querySelectorAll('.game-checkbox').forEach(cb => cb.checked = false);
         });
 
+        // Player input changes update rating range state
+        whitePlayerInput.addEventListener('input', updateRatingRangeState);
+        blackPlayerInput.addEventListener('input', updateRatingRangeState);
 
         // ========== Initialize ==========
         document.addEventListener('DOMContentLoaded', () => {
             initChessboard();
+            initMultiSelects();
             updateFormFields();
         });
     </script>
